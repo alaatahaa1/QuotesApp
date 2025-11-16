@@ -12,33 +12,42 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isDarkMode = false;
 
+  // NEW: Voice selection
+  String _selectedVoice = 'female'; // default
+
   @override
   void initState() {
     super.initState();
-    _loadThemePreference();
+    _loadPreferences();
   }
 
-  // Load saved theme preference from shared preferences
-  Future<void> _loadThemePreference() async {
+  // Load theme + voice preference
+  Future<void> _loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+      _selectedVoice = prefs.getString('voiceType') ?? 'female';
     });
   }
 
-  // Save theme preference to shared preferences
+  // Save theme
   Future<void> _saveThemePreference(bool isDarkMode) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('isDarkMode', isDarkMode);
   }
 
-  // Toggle theme and save preference
+  // Save selected voice type
+  Future<void> _saveVoicePreference(String voiceType) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('voiceType', voiceType);
+  }
+
   void _toggleTheme(bool value) {
     setState(() {
       _isDarkMode = value;
-      _saveThemePreference(_isDarkMode);
+      _saveThemePreference(value);
     });
-    // This triggers a theme change in the app
+
     if (_isDarkMode) {
       QuotesApp.of(context)?.setDarkMode();
     } else {
@@ -57,15 +66,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // DARK MODE
             SwitchListTile(
               title: const Text('Dark Mode'),
               value: _isDarkMode,
               onChanged: _toggleTheme,
             ),
+
             const SizedBox(height: 20),
-            // Footer with developer and copyright info
+
+            // 🔥 AI VOICE SELECTION
+            const Text(
+              "Voice Type (AI Voice)",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            DropdownButton<String>(
+              value: _selectedVoice,
+              items: const [
+                DropdownMenuItem(
+                  value: "female",
+                  child: Text("Female Voice"),
+                ),
+                DropdownMenuItem(
+                  value: "male",
+                  child: Text("Male Voice"),
+                ),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _selectedVoice = value!;
+                });
+                _saveVoicePreference(value!);
+              },
+            ),
+
+            const SizedBox(height: 40),
+
             const Divider(),
             const SizedBox(height: 10),
+
             Center(
               child: Column(
                 children: [
@@ -74,18 +113,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 5),
-                  GestureDetector(
-                    onTap: () {
-                      // You can add functionality to open the website here
-                      // For example, using URL launcher to open the website
-                    },
-                    child: const Text(
-                      '© 2025 All Rights Reserved | alaataha.dev',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.blue,
-                        decoration: TextDecoration.underline,
-                      ),
+                  const Text(
+                    '© 2025 All Rights Reserved | alaataha.dev',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ],
